@@ -1,0 +1,40 @@
+﻿<Window x:Class="InterestRateModellingTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:InterestRateModellingTool.Main"
+        xmlns:controls="clr-namespace:InterestRateModellingTool.Controls"
+        xmlns:model="clr-namespace:Bristotti.Finance.Model;assembly=Bristotti.Finance"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+
+    <Window.DataContext>
+        <local:Model/>
+    </Window.DataContext>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Series">
+                <MenuItem Header="Copom Meetings..." Command="{Binding CopomMeetingsCommand}"/>
+            </MenuItem>
+        </Menu>
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar>
+                <Label>Date:</Label>
+                <DatePicker SelectedDate="{Binding Path=Date, Mode=TwoWay}" />
+                <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
+                <Button Content="Build Curve" Command="{Binding BuildCurveCommand}"/>
+                <Button Content="Test" Command="{Binding TestCommand}"/>
+            </ToolBar>
+        </ToolBarTray>
+        <TabControl>
+            <TabItem Header="COPOM Meetings">
+                <controls:CopomMeetingControl DataContext="{Binding Path=CopomMeetings, Mode=OneWay}"></controls:CopomMeetingControl>
+            </TabItem>
+            <TabItem Header="DI1">
+                <controls:DI1Control DataContext="{Binding Path=DI1Series, Mode=OneWay}"></controls:DI1Control>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
