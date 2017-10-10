@@ -1,40 +1,101 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
-using System.Data.OleDb;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bristotti.Common.Data;
-using Bristotti.Finance.ExcelDataAccess;
-using Bristotti.Finance.Model;
+using LinqToExcel;
 using Microsoft.SolverFoundation.Services;
 using Microsoft.SolverFoundation.Solvers;
+using Remotion.Utilities;
 
 namespace ConsoleApp1
 {
-    partial class Program
+    internal partial class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            //MinimizeSample();
-            MinimizeSimple();
+           
+            ReadExcel();
+
+
+            while (Console.ReadLine() != "q")
+            {
+                MinimizeSimple();
+            }
         }
 
-        static void MinimizeSample()
+
+        
+
+        private static void ReadExcel()
         {
-            Segment[] segmentData = {
-                new Segment { Id = 0, Distance = 0, MinDepartDay = 0, MaxDepartDay = 0,
-                    StartingPort = "Vancouver" },
-                new Segment { Id = 1, Distance = 510, MinDepartDay = 1, MaxDepartDay = 4,
-                    StartingPort = "Seattle" },
-                new Segment { Id = 2, Distance = 2699, MinDepartDay = 50, MaxDepartDay = 65,
-                    StartingPort = "Busan" },
-                new Segment { Id = 3, Distance = 838, MinDepartDay = 70, MaxDepartDay = 75,
-                    StartingPort = "Kaohsiung" },
-                new Segment { Id = 4, Distance = 3625, MinDepartDay = 74, MaxDepartDay = 80,
-                    StartingPort = "Hong Kong" }
+            var repo = new YieldRepository(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample.xlsx"));
+
+            
+            var date = new DateTime(2015, 4, 2);
+
+            var meetings = repo.GetCopomMeetings(date).ToArray();
+            Debug.Assert(meetings.Length == 14);
+
+
+            var di1s = repo.GetDI1s(date).ToArray();
+            Debug.Assert(di1s.Length == 37);
+
+
+            var from = date;
+            var to = date.AddDays(1);
+            int days = repo.GetNetworkDays(from, to);
+            Debug.Assert(days == 1);
+
+
+            var yields = repo.BuildYield(date).ToArray();
+            Debug.Assert(yields.Length == meetings.Length + di1s.Length + 1);
+        }
+
+        private static void MinimizeSample()
+        {
+            Segment[] segmentData =
+            {
+                new Segment
+                {
+                    Id = 0,
+                    Distance = 0,
+                    MinDepartDay = 0,
+                    MaxDepartDay = 0,
+                    StartingPort = "Vancouver"
+                },
+                new Segment
+                {
+                    Id = 1,
+                    Distance = 510,
+                    MinDepartDay = 1,
+                    MaxDepartDay = 4,
+                    StartingPort = "Seattle"
+                },
+                new Segment
+                {
+                    Id = 2,
+                    Distance = 2699,
+                    MinDepartDay = 50,
+                    MaxDepartDay = 65,
+                    StartingPort = "Busan"
+                },
+                new Segment
+                {
+                    Id = 3,
+                    Distance = 838,
+                    MinDepartDay = 70,
+                    MaxDepartDay = 75,
+                    StartingPort = "Kaohsiung"
+                },
+                new Segment
+                {
+                    Id = 4,
+                    Distance = 3625,
+                    MinDepartDay = 74,
+                    MaxDepartDay = 80,
+                    StartingPort = "Hong Kong"
+                }
             };
 
             var context = SolverContext.GetContext();
@@ -68,7 +129,7 @@ namespace ConsoleApp1
             // the sailing time, and time in port.
             model.AddConstraint("times", Model.ForEachWhere(segments,
                 s => time[s - 1] + distance[s - 1] / speed[s - 1] + wait[s] == time[s],
-                s => (s > 0)));
+                s => s > 0));
 
             model.AddConstraint("wait_0", wait[0] == 0);
 
@@ -89,91 +150,78 @@ namespace ConsoleApp1
             Console.ReadLine();
         }
 
-        static void MinimizeSimple()
+        private static void MinimizeSimple()
         {
-            var yieldData = new[]
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+
+            var @short = new Yield
             {
-                new SimpleYield
+                Term = 325,
+                Forward = 13.88,
+                Spot = 13.390356079286300000
+            };
+
+            var yields = new[]
+            {
+                new Yield
                 {
-                    Id = 0,
-                    Forward = 1.015051026
-                },
-                new SimpleYield
+                    Term = 355
+                }, 
+                new Yield
                 {
-                    Id = 1,
-                    Forward = 1.010976474
+                    Term = 377
                 }
             };
 
-            var context = SolverContext.GetContext();
-            context.ClearModel();
+            FindForwards(
+                @short,
+                yields,
+                13.32);
 
-            var model = context.CreateModel();
-            var fwds = new Decision[yieldData.Length];
-            for (var i = 0; i < fwds.Length; i++)
-                model.AddDecision(fwds[i] = new Decision(Domain.RealNonnegative, null));
-
-            Term fwd = 1.0253168688028800000;
-            Term fwdD0 = 1.006728464462830000;
-            Term product = 1f;
-            var diff = new Term[fwds.Length];
-            for (var i = 0; i < fwds.Length; i++)
-            {
-                var prev = i == 0 ? fwdD0 : fwds[i - 1];
-                product *= fwds[i];
-                diff[i] = fwds[i] - prev;
-            }
-
-            var diff2 = new Term[fwds.Length - 1];
-            for (var i = 1; i < fwds.Length; i++)
-            {
-                diff2[i - 1] = diff[i] - diff[i - 1];
-            }
-
-            //var goal = Model.Abs((fwd - product) * 10000 + Model.Abs(Model.Sum(diff2)) * 10000);
-            var goal = Model.Abs((fwd - product) * 10000);
-
-            model.AddGoal("erro", GoalKind.Minimize, goal);
-            
-            var solution = context.Solve();
-            
-            Console.WriteLine("e = {0}", solution.Goals.First().ToDouble());
-            for (var i = 0; i < fwds.Length; i++) Console.WriteLine("fwd[{0}] = {1}", i, fwds[i].GetDouble());
-
-            Console.ReadLine();
+            Console.WriteLine($"Elapsed={clock.ElapsedMilliseconds} Forwards={string.Join(";", yields.Select(y => $"t={y.Term};fwd={y.Forward}"))}");
         }
 
-        private static void Minimize(Yield[] yields)
+        private static void FindForwards(Yield @short, Yield[] yields, double spotTarget)
         {
-            var solver = new CompactQuasiNewtonSolver();
-            var model = SolverContext.GetContext().CreateModel();
+            var context = SolverContext.GetContext();
+            context.ClearModel();
+            var model = context.CreateModel();
 
-            var yieldSet = new Set(Domain.Integer, "yields");
-            var sameFwdParameter = new Parameter(Domain.Boolean, "sameFwd", yieldSet);
-            sameFwdParameter.SetBinding(yields, "SameFwd", "Id");
-            var termParameter = new Parameter(Domain.RealNonnegative, "term", yieldSet);
-            termParameter.SetBinding(yields, "Term", "Id");
-            var termDeltaParameter = new Parameter(Domain.RealNonnegative, "termDelta", yieldSet);
-            termDeltaParameter.SetBinding(yields, "TermDelta", "Id");
-            var rmParameter = new Parameter(Domain.RealNonnegative, "rm", yieldSet);
-            rmParameter.SetBinding(yields, "TermDelta", "Id");
+            var forwards = new Decision[yields.Length];
+            for (var i = 0; i < forwards.Length; i++)
+                model.AddDecision(forwards[i] = new Decision(Domain.RealNonnegative, null));
 
-            model.AddParameters(sameFwdParameter, termParameter, termDeltaParameter, rmParameter);
+            Term fwd = @short.Forward;
+            var spotFactor = Model.Power(1d + @short.Spot / 100d, @short.Term / 252d);
+            var diff = new Term[forwards.Length + 1];
+            diff[0] = 0;
 
-            var fwdDecision = new Decision(Domain.RealNonnegative, "FwdInput", yieldSet);
-            fwdDecision.SetBinding(yields, "FwdInput", "Id");
-            model.AddDecision(fwdDecision);
-
-            model.AddGoal("error", GoalKind.Minimize, Model.Sum(Model.ForEach(yieldSet, t =>
+            for (var i = 0; i < forwards.Length; i++)
             {
-                var fwd = Model.If(sameFwdParameter[t], fwdDecision[t], fwdDecision[t]);
+                var termDelta = yields[i].Term - (i == 0 ? @short.Term : yields[i - 1].Term);
+                var forwardFactor = Model.Power(1d + forwards[i] / 100d, termDelta / 252d);
+                spotFactor *= forwardFactor;
+                diff[i + 1] = forwards[i] - (i == 0 ? fwd : forwards[i - 1]);
+            }
 
-                var fwdFactor = Model.Power(1 + fwd / 100, termDeltaParameter / 252);
+            var spot = (Model.Power(spotFactor, 252d / yields.Last().Term)-1d)*100d;
 
+            var diff2 = new Term[diff.Length - 1];
+            for (var i = 1; i < diff.Length; i++)
+                diff2[i - 1] = diff[i] - diff[i - 1];
 
+            var diff3 = new Term[diff2.Length - 1];
+            for (var i = 1; i < diff2.Length; i++)
+                diff3[i - 1] = diff2[i] - diff2[i - 1];
 
-                return fwdFactor;
-            })));
+            var goal = Model.Sum(Model.Abs(spot - spotTarget), Model.Abs(Model.Sum(diff3)));
+
+            model.AddGoal("erro", GoalKind.Minimize, goal);
+
+            context.Solve();
+
+            for (var i = 0; i < forwards.Length; i++)
+                yields[i].Forward = forwards[i].GetDouble();
         }
     }
 }
