@@ -17,10 +17,13 @@ namespace ConsoleApp1
            
             ReadExcel();
 
-
+            var repo = new YieldRepository(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample.xlsx"));
             while (Console.ReadLine() != "q")
             {
-                MinimizeSimple();
+                var clock = Stopwatch.StartNew();
+                var yields = repo.BuildYield(new DateTime(2015, 4, 2)).ToArray();
+                Console.WriteLine($"ElapsedMilliseconds={clock.ElapsedMilliseconds}");
+                //MinimizeSimple();
             }
         }
 

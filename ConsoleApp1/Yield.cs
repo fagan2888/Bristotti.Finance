@@ -8,6 +8,9 @@
         public double Spot { get; set; }
         public YieldType YieldType { get; set; }
         public double SpotMtm { get; set; }
+        public double SpotFactor { get; set; }
+        public double ForwardFactor { get; set; }
+        public double Bump { get; set; }
     }
 
     public enum YieldType
