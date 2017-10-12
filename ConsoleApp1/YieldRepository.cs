@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LinqToExcel;
 using Microsoft.SolverFoundation.Services;
@@ -24,7 +25,7 @@ namespace ConsoleApp1
 
         public IEnumerable<CopomMeeting> GetCopomMeetings(DateTime date)
         {
-            var maxDate = new DateTime(date.Year + 1, 12, 31);
+            var maxDate = new DateTime(date.Year + 2, 12, 31);
 
             return from x in Excel.Worksheet<CopomMeeting>("CopomMeeting")
                 where x.Date >= date && x.Date <= maxDate
@@ -82,9 +83,12 @@ namespace ConsoleApp1
 
         public IEnumerable<Yield> BuildYield(DateTime date)
         {
+            var clock = Stopwatch.StartNew();
+            
             var copomMeetings = GetCopomMeetings(date).ToArray();
             var di1s = GetDI1s(date).ToArray();
             var cdi = GetCDI(date);
+            Console.WriteLine($"Load data={clock.ElapsedMilliseconds}");
 
             var yields = InitializeYield(date, cdi, copomMeetings, di1s).ToArray();
 
@@ -126,8 +130,17 @@ namespace ConsoleApp1
                     var nextNextDI = diPos + 1 < diArray.Length ? diArray[diPos + 1] : -1;
                     var nextCOPOM = copomPos < copomArray.Length ? copomArray[copomPos] : -1;
 
+                    // não tem mais reunião do copom, portanto haverá bump no vencimento de DI1
+                    if (meetings == 0)
+                    {
+                        if(i + 1 >= yields.Length)
+                            continue;
+                        var forwardFactor = GetFactor(yields[i + 1].SpotMtm, yields[i + 1].Term) / yields[i].SpotFactor;
+                        var forward = GetInterest(forwardFactor, yields[i + 1].Term - yields[i].Term);
+                        yields[i].Bump = forward - yields[i].Forward;
+                    }
                     // os dois próximos vértices são de DI1
-                    if (nextDI - i == 1 && nextDI == nextNextDI - 1)
+                    else if (nextDI - i == 1 && nextDI == nextNextDI - 1)
                     {
                         // calculamos o bump considerando apenas o vencimento de DI1 mais longo
                         var forwardFactor = GetFactor(yields[i + 2].SpotMtm, yields[i + 2].Term) / yields[i].SpotFactor;
@@ -156,6 +169,7 @@ namespace ConsoleApp1
                         yields[i + 1].Bump = yields[i + 2].Forward - yields[i + 1].Forward;
 
                         i++;
+                        meetings--;
                         yields[i].Forward = yields[i - 1].Forward + yields[i - 1].Bump;
                         yields[i].ForwardFactor = GetFactor(yields[i].Forward, yields[i].Term - yields[i - 1].Term);
                         yields[i].SpotFactor = yields[i - 1].SpotFactor * yields[i].ForwardFactor;
@@ -168,6 +182,7 @@ namespace ConsoleApp1
                 }
             }
 
+            Console.WriteLine($"Interpolate yield={clock.ElapsedMilliseconds}");
             return yields;
         }
 
@@ -238,9 +253,11 @@ namespace ConsoleApp1
 
         private static void FindForwards(Yield @short, Yield[] yields, double spotTarget)
         {
+            var clock = Stopwatch.StartNew();
             var context = SolverContext.GetContext();
             context.ClearModel();
             var model = context.CreateModel();
+            Console.WriteLine($"Solver-Clean/Create model={clock.ElapsedMilliseconds}");
 
             var forwards = new Decision[yields.Length];
             for (var i = 0; i < forwards.Length; i++)
@@ -271,9 +288,11 @@ namespace ConsoleApp1
 
             var goal = Model.Sum(Model.Abs(spot - spotTarget), Model.Abs(Model.Sum(diff3)));
 
-            model.AddGoal("erro", GoalKind.Minimize, goal);
 
+            model.AddGoal("erro", GoalKind.Minimize, goal);
+            Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
             context.Solve();
+            Console.WriteLine($"Solver-solve={clock.ElapsedMilliseconds}");
 
             for (var i = 0; i < forwards.Length; i++)
                 yields[i].Forward = forwards[i].GetDouble();

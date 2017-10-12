@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 using LinqToExcel;
 using Microsoft.SolverFoundation.Services;
 using Microsoft.SolverFoundation.Solvers;
@@ -12,6 +13,7 @@ namespace ConsoleApp1
 {
     internal partial class Program
     {
+        [STAThread]
         private static void Main(string[] args)
         {
            
@@ -22,8 +24,18 @@ namespace ConsoleApp1
             {
                 var clock = Stopwatch.StartNew();
                 var yields = repo.BuildYield(new DateTime(2015, 4, 2)).ToArray();
+
                 Console.WriteLine($"ElapsedMilliseconds={clock.ElapsedMilliseconds}");
                 //MinimizeSimple();
+
+                var form = new Form();
+                var grid = new DataGridView();
+                form.Controls.Add(grid);
+                grid.Dock = DockStyle.Fill;
+                grid.AutoGenerateColumns = true;
+                grid.DataSource = yields;
+                grid.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableAlwaysIncludeHeaderText;
+                form.ShowDialog();
             }
         }
 
@@ -38,7 +50,7 @@ namespace ConsoleApp1
             var date = new DateTime(2015, 4, 2);
 
             var meetings = repo.GetCopomMeetings(date).ToArray();
-            Debug.Assert(meetings.Length == 14);
+            Debug.Assert(meetings.Length == 22);
 
 
             var di1s = repo.GetDI1s(date).ToArray();
