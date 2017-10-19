@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6539F2E5-F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterestRateModellingTool", "InterestRateModellingTool\InterestRateModellingTool.csproj", "{820AC4FD-5AAB-4155-9F11-4B6AD0247B52}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bristotti.Finance.DataAccess", "Bristotti.Finance.DataAccess\Bristotti.Finance.DataAccess.csproj", "{4D8F8C68-FF3E-4421-B896-0738748D8A62}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bristotti.Finance.ExcelDataAccess", "Bristotti.Finance.ExcelDataAccess\Bristotti.Finance.ExcelDataAccess.csproj", "{1F09398C-14AF-4626-A18B-A6AB2CD5F2BA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{9A002E20-4CBE-496A-AEC0-40E69C3BDD0E}"
@@ -43,14 +41,6 @@ Global
 		{820AC4FD-5AAB-4155-9F11-4B6AD0247B52}.Release|Any CPU.Build.0 = Release|Any CPU
 		{820AC4FD-5AAB-4155-9F11-4B6AD0247B52}.Release|x64.ActiveCfg = Release|x64
 		{820AC4FD-5AAB-4155-9F11-4B6AD0247B52}.Release|x64.Build.0 = Release|x64
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Debug|x64.ActiveCfg = Debug|x64
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Debug|x64.Build.0 = Debug|x64
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Release|x64.ActiveCfg = Release|x64
-		{4D8F8C68-FF3E-4421-B896-0738748D8A62}.Release|x64.Build.0 = Release|x64
 		{1F09398C-14AF-4626-A18B-A6AB2CD5F2BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F09398C-14AF-4626-A18B-A6AB2CD5F2BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F09398C-14AF-4626-A18B-A6AB2CD5F2BA}.Debug|x64.ActiveCfg = Debug|x64

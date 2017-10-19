@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Bristotti.Finance.DataAccess;
 using Bristotti.Finance.Model;
 using Castle.Windsor;
 using NHibernate;
@@ -16,34 +15,34 @@ namespace InterestRateModellingTool
 
         public static void Init()
         {
-            var cfg = new Configuration();
+            //var cfg = new Configuration();
 
-            cfg.Configure();
+            //cfg.Configure();
 
-            var mapper = new ConventionModelMapper();
+            //var mapper = new ConventionModelMapper();
 
-            var entityType = typeof(Entity);
-            mapper.IsEntity(
-                (t, declared) => entityType.IsAssignableFrom(t) && entityType != t && !t.IsInterface);
-            mapper.IsRootEntity((t, declared) => entityType == t.BaseType);
+            //var entityType = typeof(Entity);
+            //mapper.IsEntity(
+            //    (t, declared) => entityType.IsAssignableFrom(t) && entityType != t && !t.IsInterface);
+            //mapper.IsRootEntity((t, declared) => entityType == t.BaseType);
 
-            mapper.Class<Entity>(map =>
-            {
-                map.Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-                map.Version(x => x.Version, m => m.Generated(VersionGeneration.Always));
-            });
-            mapper.BeforeMapProperty += (insp, prop, map) => map.NotNullable(true);
+            //mapper.Class<Entity>(map =>
+            //{
+            //    map.Id(x => x.Id, m => m.Generator(Generators.GuidComb));
+            //    map.Version(x => x.Version, m => m.Generated(VersionGeneration.Always));
+            //});
+            //mapper.BeforeMapProperty += (insp, prop, map) => map.NotNullable(true);
 
-            mapper.Class<CopomMeeting>(map => map.Property(x => x.InterestTarget, pm => pm.NotNullable(false)));
+            //mapper.Class<CopomMeeting>(map => map.Property(x => x.InterestTarget, pm => pm.NotNullable(false)));
 
-            var mapping = mapper.CompileMappingFor(
-                entityType.Assembly.GetExportedTypes()
-                    .Where(t => t.Namespace.EndsWith("Model")));
-            cfg.AddMapping(mapping);
+            //var mapping = mapper.CompileMappingFor(
+            //    entityType.Assembly.GetExportedTypes()
+            //        .Where(t => t.Namespace.EndsWith("Model")));
+            //cfg.AddMapping(mapping);
             
-            SessionFactory = cfg.BuildSessionFactory();
+            //SessionFactory = cfg.BuildSessionFactory();
 
-            new SchemaExport(cfg).Execute(true, true, false);
+            //new SchemaExport(cfg).Execute(true, true, false);
 
             var container = new WindsorContainer();
             Container = container;

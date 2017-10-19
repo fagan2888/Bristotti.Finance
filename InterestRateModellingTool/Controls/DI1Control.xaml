@@ -11,7 +11,25 @@
         <model:DI1/>
     </UserControl.DataContext>
     <Grid>
-        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="True" SelectionUnit="Cell">
+        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="False" SelectionUnit="FullRow" IsReadOnly="True" CanUserResizeColumns="True" CanUserResizeRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Market Date" Binding="{Binding MarketDate, StringFormat=\{0:yyyy-MM-dd\}}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Maturity" Binding="{Binding MaturityDate, StringFormat=\{0:yyyy-MM-dd\}}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Spot" Binding="{Binding Spot, StringFormat=\{0:N2\}}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextAlignment" Value="Right"></Setter>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Total Contracts" Binding="{Binding TotalContracts, StringFormat=\{0:N0\}}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextAlignment" Value="Right"></Setter>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
         </DataGrid>
     </Grid>
 </UserControl>

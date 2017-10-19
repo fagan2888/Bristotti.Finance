@@ -72,6 +72,12 @@
     <Reference Include="NHibernate, Version=4.1.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
       <HintPath>..\packages\NHibernate.4.1.1.4000\lib\net40\NHibernate.dll</HintPath>
     </Reference>
+    <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
+      <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
+    </Reference>
+    <Reference Include="OxyPlot.Wpf, Version=1.0.0.0, Culture=neutral, PublicKeyToken=75e952ba404cdbb0, processorArchitecture=MSIL">
+      <HintPath>..\packages\OxyPlot.Wpf.1.0.0\lib\net45\OxyPlot.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite, Version=1.0.105.2, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
@@ -101,11 +107,6 @@
     <Compile Include="Controls\DI1Control.xaml.cs">
       <DependentUpon>DI1Control.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Series\Copom\Meetings\CopomMeetingWindow.xaml.cs">
-      <DependentUpon>CopomMeetingWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Series\Copom\Meetings\Model.cs" />
-    <Compile Include="Series\Copom\Meetings\Presenter.cs" />
     <Page Include="Controls\CopomMeetingControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -132,14 +133,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Series\Copom\Meetings\CopomMeetingWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\Model.cs" />
-    <Compile Include="Main\Presenter.cs" />
+    <Compile Include="Main\ViewModel.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -168,10 +165,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bristotti.Finance.DataAccess\Bristotti.Finance.DataAccess.csproj">
-      <Project>{4D8F8C68-FF3E-4421-B896-0738748D8A62}</Project>
-      <Name>Bristotti.Finance.DataAccess</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Bristotti.Finance.ExcelDataAccess\Bristotti.Finance.ExcelDataAccess.csproj">
       <Project>{1F09398C-14AF-4626-A18B-A6AB2CD5F2BA}</Project>
       <Name>Bristotti.Finance.ExcelDataAccess</Name>

@@ -21,7 +21,7 @@ namespace InterestRateModellingTool
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            (new Presenter()).Show();
+            (new ViewModel()).Show();
             //(new Series.Copom.Meetings.Presenter()).Show();
         }
     }

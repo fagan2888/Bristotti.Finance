@@ -6,6 +6,9 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Bristotti.Finance.Model;
 using InterestRateModellingTool.Annotations;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 
 namespace InterestRateModellingTool.Main
 {
@@ -14,6 +17,23 @@ namespace InterestRateModellingTool.Main
         private ObservableCollection<CopomMeeting> _copomMeetings;
         private DateTime _date;
         private ObservableCollection<DI1> _di1series;
+        private Yield[] _yields;
+        private PlotModel _plotModel;
+
+        public Model()
+        {
+            PlotModel = new PlotModel { Title = "Yield Curve" };
+            var series = new LineSeries
+            {
+                MarkerType = MarkerType.Circle
+            };
+
+
+            PlotModel.Series.Add(series);
+            //PlotModel.Axes.Add(new LinearColorAxis { Position = AxisPosition.Right, Palette = OxyPalettes.Jet(200) });
+
+            //PlotModel.Series.Add(new FunctionSeries(Math.Cos, 0, 10, 0.1, "cos(x)"));
+        }
 
         public DateTime Date
         {
@@ -45,6 +65,12 @@ namespace InterestRateModellingTool.Main
             }
         }
 
+        public Yield[] Yields
+        {
+            get => _yields;
+            set { _yields = value; OnPropertyChanged();}
+        }
+
         public ICommand TestCommand { get; set; }
 
         public ICommand RefreshCommand { get; set; }
@@ -59,5 +85,16 @@ namespace InterestRateModellingTool.Main
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public PlotModel PlotModel
+        {
+            get => _plotModel;
+            set { _plotModel = value; OnPropertyChanged();}
+        }
     }
+
+    //public class Points
+    //{
+    //    prop
+    //}
 }

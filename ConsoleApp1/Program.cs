@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Bristotti.Finance.ExcelDataAccess;
+using Bristotti.Finance.Model;
 using LinqToExcel;
 using Microsoft.SolverFoundation.Services;
 using Microsoft.SolverFoundation.Solvers;
@@ -19,7 +21,8 @@ namespace ConsoleApp1
            
             ReadExcel();
 
-            var repo = new YieldRepository(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample.xlsx"));
+            //var repo = new YieldRepository(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample.xlsx"));
+            var repo = new YieldRepository("sample.xlsx");
             while (Console.ReadLine() != "q")
             {
                 var clock = Stopwatch.StartNew();
@@ -38,9 +41,6 @@ namespace ConsoleApp1
                 form.ShowDialog();
             }
         }
-
-
-        
 
         private static void ReadExcel()
         {

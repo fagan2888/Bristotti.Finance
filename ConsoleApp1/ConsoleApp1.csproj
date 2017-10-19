@@ -82,17 +82,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CDI.cs" />
-    <Compile Include="DI1.cs" />
-    <Compile Include="Holiday.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="Copom.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Segment.cs" />
-    <Compile Include="Yield.cs" />
-    <Compile Include="YieldData.cs" />
-    <Compile Include="YieldRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

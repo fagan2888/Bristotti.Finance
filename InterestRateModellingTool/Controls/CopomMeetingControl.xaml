@@ -13,7 +13,10 @@
     </UserControl.DataContext>
     
     <Grid>
-        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="True" SelectionUnit="Cell">
+        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="False" SelectionUnit="FullRow" IsReadOnly="True" CanUserResizeColumns="True" CanUserResizeRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Meeting Date" Binding="{Binding Date, StringFormat=\{0:yyyy-MM-dd\}}"></DataGridTextColumn>
+            </DataGrid.Columns>
         </DataGrid>
     </Grid>
 </UserControl>
