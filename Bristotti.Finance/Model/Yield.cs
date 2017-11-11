@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public double Term { get; set; }
+        public double DeltaTerm { get; set; }
         public double Forward { get; set; }
         public double Spot { get; set; }
         public YieldType YieldType { get; set; }
@@ -11,6 +12,7 @@
         public double SpotFactor { get; set; }
         public double ForwardFactor { get; set; }
         public double Bump { get; set; }
+        public double TotalTradesMtm { get; set; }
     }
 
     public enum YieldType

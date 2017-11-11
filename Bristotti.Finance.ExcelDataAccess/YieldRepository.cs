@@ -39,6 +39,7 @@ namespace Bristotti.Finance.ExcelDataAccess
             Excel.AddMapping<DI1>(x => x.Spot, "Close");
             return from x in Excel.Worksheet<DI1>("di1")
                 where x.MarketDate == date && x.TotalContracts > 0
+                orderby x.MaturityDate
                 select x;
         }
 
@@ -211,9 +212,9 @@ namespace Bristotti.Finance.ExcelDataAccess
             yield return new Yield
             {
                 Term = 0,
-                Forward = cdi.Media,
-                SpotMtm = cdi.Media,
-                Spot = cdi.Media,
+                Forward = cdi.TaxaCDI,
+                SpotMtm = cdi.TaxaCDI,
+                Spot = cdi.TaxaCDI,
                 YieldType = YieldType.CDI,
                 ForwardFactor = 1d,
                 SpotFactor = 1d

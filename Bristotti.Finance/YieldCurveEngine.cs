@@ -27,6 +27,11 @@ namespace Bristotti.Finance
 
             var yields = InitializeYield(date, cdi, copomMeetings, di1s, holidays).ToArray();
 
+            for (var i = 1; i < yields.Length; i++)
+                yields[i].DeltaTerm = yields[i].Term - yields[i - 1].Term;
+
+            yields = yields.Where(y => y.YieldType != YieldType.DI1 || (y.DeltaTerm > 1 && y.TotalTradesMtm > 1)).ToArray();
+
             var meetings = copomMeetings.Length;
             double bump = 0;
             var diArray = Enumerable.Range(0, yields.Length)
@@ -38,6 +43,7 @@ namespace Bristotti.Finance
 
             var diPos = 0;
             var copomPos = 0;
+            yields[0].Forward = yields.First(y => y.YieldType == YieldType.DI1).SpotMtm;
 
             for (var i = 1; i < yields.Length; i++)
             {
@@ -104,6 +110,7 @@ namespace Bristotti.Finance
 
                         i++;
                         meetings--;
+                        copomPos++;
                         yields[i].Forward = yields[i - 1].Forward + yields[i - 1].Bump;
                         yields[i].ForwardFactor = GetFactor(yields[i].Forward, yields[i].Term - yields[i - 1].Term);
                         yields[i].SpotFactor = yields[i - 1].SpotFactor * yields[i].ForwardFactor;
@@ -128,9 +135,9 @@ namespace Bristotti.Finance
             yield return new Yield
             {
                 Term = 0,
-                Forward = cdi.Media,
-                SpotMtm = cdi.Media,
-                Spot = cdi.Media,
+                Forward = cdi.TaxaCDI,
+                SpotMtm = cdi.TaxaCDI,
+                Spot = cdi.TaxaCDI,
                 YieldType = YieldType.CDI,
                 ForwardFactor = 1d,
                 SpotFactor = 1d
@@ -153,7 +160,8 @@ namespace Bristotti.Finance
                     {
                         Term = GetNetworkDays(date, di1s[i_d].MaturityDate, holidays),
                         YieldType = YieldType.DI1,
-                        SpotMtm = di1s[i_d].Spot
+                        SpotMtm = di1s[i_d].Spot,
+                        TotalTradesMtm = di1s[i_d].TotalTrades
                     };
                     i_d++;
                 }
@@ -171,7 +179,8 @@ namespace Bristotti.Finance
                 {
                     Term = GetNetworkDays(date, di1s[i_d].MaturityDate, holidays),
                     YieldType = YieldType.DI1,
-                    SpotMtm = di1s[i_d].Spot
+                    SpotMtm = di1s[i_d].Spot,
+                    TotalTradesMtm = di1s[i_d].TotalTrades
                 };
         }
 

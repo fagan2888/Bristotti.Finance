@@ -6,7 +6,7 @@ namespace Bristotti.Finance.Model
     {
         public DateTime Date { get; set; }
         public double Operacoes { get; set; }
-        public double Media { get; set; }
+        public double TaxaCDI { get; set; }
         public double TaxaSELIC { get; set; }
     }
 }
