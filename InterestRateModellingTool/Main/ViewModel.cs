@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using Bristotti.Finance;
 using Bristotti.Finance.ExcelDataAccess;
 using Bristotti.Finance.Model;
@@ -38,23 +39,38 @@ namespace InterestRateModellingTool.Main
 
         private void BuildCurve()
         {
-            var engine = new YieldCurveEngine();
+            try
+            {
+                var engine = new YieldCurveEngine();
 
-            var holidays = _yieldRepository.GetHolidays();
-            var cdi = _yieldRepository.GetCDI(_model.Date);
-            _model.Yields = engine.BuildYield(
-                    _model.Date,
-                    _model.CopomMeetings.ToArray(),
-                    _model.DI1Series.ToArray(),
-                    cdi,
-                    holidays)
-                .ToArray();
+                var holidays = _yieldRepository.GetHolidays();
+                var cdi = _yieldRepository.GetCDI(_model.Date);
+                //_model.Yields = engine.BuildYield(
+                //        _model.Date,
+                //        _model.CopomMeetings.ToArray(),
+                //        _model.DI1Series.ToArray(),
+                //        cdi,
+                //        holidays)
+                //    .ToArray();
+
+                _model.Yields = engine.BuildYield2(
+                        _model.Date,
+                        _model.CopomMeetings.ToArray(),
+                        _model.DI1Series.ToArray(),
+                        cdi,
+                        holidays)
+                    .ToArray();
 
 
-            var line = (LineSeries) _model.PlotModel.Series[0];
-            line.Points.Clear();
-            line.Points.AddRange(_model.Yields.Select(yield => new DataPoint(DateTimeAxis.ToDouble(yield.Maturity), yield.Spot)));
-            _model.PlotModel.InvalidatePlot(true);
+                var line = (LineSeries)_model.PlotModel.Series[0];
+                line.Points.Clear();
+                line.Points.AddRange(_model.Yields.Select(yield => new DataPoint(DateTimeAxis.ToDouble(yield.Maturity), yield.Spot)));
+                _model.PlotModel.InvalidatePlot(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void Refresh()

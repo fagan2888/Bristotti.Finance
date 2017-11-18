@@ -44,6 +44,7 @@ namespace Bristotti.Finance
             var diPos = 0;
             var copomPos = 0;
             yields[0].Forward = yields.First(y => y.YieldType == YieldType.DI1).SpotMtm;
+            var lastBump = 0d;
 
             for (var i = 1; i < yields.Length; i++)
             {
@@ -77,7 +78,7 @@ namespace Bristotti.Finance
                             continue;
                         var forwardFactor = GetFactor(yields[i + 1].SpotMtm, yields[i + 1].Term) / yields[i].SpotFactor;
                         var forward = GetInterest(forwardFactor, yields[i + 1].Term - yields[i].Term);
-                        yields[i].Bump = forward - yields[i].Forward;
+                        lastBump = yields[i].Bump = forward - yields[i].Forward;
                     }
                     // os dois próximos vértices são de DI1
                     else if (nextDI - i == 1 && nextDI == nextNextDI - 1)
@@ -85,36 +86,43 @@ namespace Bristotti.Finance
                         // calculamos o bump considerando apenas o vencimento de DI1 mais longo
                         var forwardFactor = GetFactor(yields[i + 2].SpotMtm, yields[i + 2].Term) / yields[i].SpotFactor;
                         var forward = GetInterest(forwardFactor, yields[i + 2].Term - yields[i].Term);
-                        yields[i].Bump = forward - yields[i].Forward;
+                        lastBump = yields[i].Bump = forward - yields[i].Forward;
                     }
                     // o próximo vértice é um DI1 seguido de um COPOM
                     else if (nextCOPOM == nextDI + 1)
                     {
                         var forwardFactor = GetFactor(yields[i + 1].SpotMtm, yields[i + 1].Term) / yields[i].SpotFactor;
                         var forward = GetInterest(forwardFactor, yields[i + 1].Term - yields[i].Term);
-                        yields[i].Bump = forward - yields[i].Forward;
+                        lastBump = yields[i].Bump = forward - yields[i].Forward;
                     }
-                    // os dois próximos vértices são reuniôes do COPOM
+                    // os próximos n vértices são reuniôes do COPOM
                     else
                     {
+                        var ps = new List<Yield>();
+                        var j = i + 1;
+                        while (j < yields.Length && yields[j].YieldType == YieldType.COPOM)
+                            ps.Add(yields[j++]);
+
+                        ps.Add(yields[j]);
+
                         FindForwards(
                             yields[i],
-                            new[]
-                            {
-                                yields[i + 1], yields[i + 2]
-                            },
-                            yields[i + 2].SpotMtm);
+                            ps.ToArray(),
+                            yields[j].SpotMtm,
+                            lastBump);
 
                         yields[i].Bump = yields[i + 1].Forward - yields[i].Forward;
-                        yields[i + 1].Bump = yields[i + 2].Forward - yields[i + 1].Forward;
 
-                        i++;
-                        meetings--;
-                        copomPos++;
-                        yields[i].Forward = yields[i - 1].Forward + yields[i - 1].Bump;
-                        yields[i].ForwardFactor = GetFactor(yields[i].Forward, yields[i].Term - yields[i - 1].Term);
-                        yields[i].SpotFactor = yields[i - 1].SpotFactor * yields[i].ForwardFactor;
-                        yields[i].Spot = GetInterest(yields[i].SpotFactor, yields[i].Term);
+                        for (i = i + 1; i < j; i++)
+                        {
+                            lastBump = yields[i].Bump = yields[i + 1].Forward - yields[i].Forward;
+                            yields[i].ForwardFactor = GetFactor(yields[i].Forward, yields[i].Term - yields[i - 1].Term);
+                            yields[i].SpotFactor = yields[i - 1].SpotFactor * yields[i].ForwardFactor;
+                            yields[i].Spot = GetInterest(yields[i].SpotFactor, yields[i].Term);
+                            meetings--;
+                            copomPos++;
+                        }
+                        i--;
                     }
                 }
                 else
@@ -122,6 +130,52 @@ namespace Bristotti.Finance
                     yields[i].Bump = 0;
                 }
             }
+
+            Console.WriteLine($"Interpolate yield={clock.ElapsedMilliseconds}");
+            return yields;
+        }
+
+        public IEnumerable<Yield> BuildYield2(DateTime date, CopomMeeting[] copomMeetings, DI1[] di1s, CDI cdi,
+            HashSet<DateTime> holidays)
+        {
+            var clock = Stopwatch.StartNew();
+
+            var yields = InitializeYield(date, cdi, copomMeetings, di1s, holidays).ToArray();
+
+            for (var i = 1; i < yields.Length; i++)
+                yields[i].DeltaTerm = yields[i].Term - yields[i - 1].Term;
+
+            yields = yields.Where(y => y.YieldType != YieldType.DI1 || (y.DeltaTerm > 1 && y.TotalTradesMtm > 1)).ToArray();
+
+            var meetings = copomMeetings.Length;
+            var diArray = Enumerable.Range(0, yields.Length)
+                .Where(i => yields[i].YieldType == YieldType.DI1)
+                .Select(i => i).ToArray();
+
+            var diPos = 0;
+            var lastCOPOM = -1;
+
+            for (var i = 1; i < yields.Length; i++)
+            {
+                var nextDI = diPos < diArray.Length ? diArray[diPos] : -1;
+
+                if (yields[i].YieldType == YieldType.COPOM)
+                {
+                    yields[i].IsSameForward = lastCOPOM != i - 1;
+                    lastCOPOM = i;
+                    meetings--;
+                }
+                else
+                {
+                    if(nextDI == i + 1 && meetings > 0)
+                        yields[i].IsSameForward = true;
+                    else
+                        yields[i].IsSameForward = false;
+                    diPos++;
+                }
+            }
+
+            Optimize(yields);
 
             Console.WriteLine($"Interpolate yield={clock.ElapsedMilliseconds}");
             return yields;
@@ -189,7 +243,7 @@ namespace Bristotti.Finance
                 };
         }
 
-        private static void FindForwards(Yield @short, Yield[] yields, double spotTarget)
+        private static void FindForwards(Yield @short, Yield[] yields, double spotTarget, double initialDiff = 0)
         {
             var clock = Stopwatch.StartNew();
             var context = SolverContext.GetContext();
@@ -204,7 +258,7 @@ namespace Bristotti.Finance
             Term fwd = @short.Forward;
             var spotFactor = Microsoft.SolverFoundation.Services.Model.Power(1d + @short.Spot / 100d, @short.Term / 252d);
             var diff = new Term[forwards.Length + 1];
-            diff[0] = 0;
+            diff[0] = initialDiff;
 
             for (var i = 0; i < forwards.Length; i++)
             {
@@ -234,6 +288,74 @@ namespace Bristotti.Finance
 
             for (var i = 0; i < forwards.Length; i++)
                 yields[i].Forward = forwards[i].GetDouble();
+        }
+
+
+        private static void Optimize(Yield[] yields)
+        {
+            var clock = Stopwatch.StartNew();
+
+            var context = SolverContext.GetContext();
+            context.ClearModel();
+            var model = context.CreateModel();
+            Console.WriteLine($"Solver-Clean/Create model={clock.ElapsedMilliseconds}");
+
+            var initialValue = yields[0].SpotMtm;
+
+            var forwards = new Decision[yields.Length];
+            for (var i = 1; i < forwards.Length; i++)
+            {
+                if (yields[i].IsSameForward)
+                    forwards[i] = forwards[i - 1];
+                else
+                {
+                    initialValue = yields[i].YieldType == YieldType.DI1 ? yields[i].SpotMtm : initialValue;
+                    forwards[i] = new Decision(Domain.RealNonnegative, null);
+                    forwards[i].SetInitialValue(initialValue);
+                    model.AddDecision(forwards[i]);
+                }
+            }
+
+            var spotFactor = (Term)1d;
+            var erro = (Term) 0d;
+            var diff = new Term[forwards.Length - 1];
+
+            for (var i = 1; i < forwards.Length; i++)
+            {
+                var termDelta = yields[i].Term - yields[i - 1].Term;
+                var forwardFactor = Microsoft.SolverFoundation.Services.Model.Power(1d + forwards[i] / 100d, termDelta / 252d);
+                spotFactor *= forwardFactor;
+                var spot = (Microsoft.SolverFoundation.Services.Model.Power(spotFactor, 252d / yields[i].Term) - 1d) * 100d;
+                if(yields[i].YieldType == YieldType.DI1)
+                    erro += Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtm - spot);
+
+                //if (i == 1)
+                //    diff[i - 1] = forwards[i] - (i == 1 ? (Term) 0 : forwards[i - 1]);
+            }
+
+            //var diff2 = new Term[diff.Length - 1];
+            //for (var i = 1; i < diff.Length; i++)
+            //    diff2[i - 1] = diff[i] - diff[i - 1];
+
+            //var diff3 = new Term[diff2.Length - 1];
+            //for (var i = 1; i < diff2.Length; i++)
+            //    diff3[i - 1] =  diff2[i] - diff2[i - 1];
+
+            model.AddGoal("erro", GoalKind.Minimize, erro);
+            Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
+            context.Solve();
+            clock.Stop();
+            Console.WriteLine($"Solver-solve={clock.ElapsedMilliseconds}");
+
+            var spotfactor = 1d;
+            for (var i = 1; i < forwards.Length; i++)
+            {
+                yields[i].Forward = forwards[i].GetDouble();
+                spotfactor *= Math.Pow(1d + yields[i].Forward / 100, (yields[i].Term - yields[i - 1].Term) / 252);
+
+                yields[i].SpotFactor = spotfactor;
+                yields[i].Spot = (Math.Pow(spotfactor, 252d / yields[i].Term) - 1d) * 100d;
+            }
         }
 
         public int GetNetworkDays(DateTime from, DateTime to, HashSet<DateTime> holidays)

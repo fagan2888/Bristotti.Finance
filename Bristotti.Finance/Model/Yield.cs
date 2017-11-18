@@ -15,6 +15,7 @@ namespace Bristotti.Finance.Model
         public double SpotFactor { get; set; }
         public double ForwardFactor { get; set; }
         public double Bump { get; set; }
+        public bool IsSameForward { get; set; }
         public double TotalTradesMtm { get; set; }
     }
 
