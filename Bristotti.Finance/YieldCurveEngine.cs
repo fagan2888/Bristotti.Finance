@@ -329,19 +329,23 @@ namespace Bristotti.Finance
                 if(yields[i].YieldType == YieldType.DI1)
                     erro += Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtm - spot);
 
-                //if (i == 1)
-                //    diff[i - 1] = forwards[i] - (i == 1 ? (Term) 0 : forwards[i - 1]);
+                diff[i - 1] = forwards[i] - (i == 1 ? (Term) 0 : forwards[i - 1]);
             }
 
-            //var diff2 = new Term[diff.Length - 1];
-            //for (var i = 1; i < diff.Length; i++)
-            //    diff2[i - 1] = diff[i] - diff[i - 1];
+            var diff2 = new Term[diff.Length - 1];
+            for (var i = 1; i < diff.Length; i++)
+                diff2[i - 1] = diff[i] - diff[i - 1];
 
-            //var diff3 = new Term[diff2.Length - 1];
-            //for (var i = 1; i < diff2.Length; i++)
-            //    diff3[i - 1] =  diff2[i] - diff2[i - 1];
+            var diff3 = new Term[diff2.Length - 1];
+            for (var i = 1; i < diff2.Length; i++)
+                diff3[i - 1] = Microsoft.SolverFoundation.Services.Model.Abs(diff2[i] - diff2[i - 1]);
 
-            model.AddGoal("erro", GoalKind.Minimize, erro);
+            model.AddGoal(
+                "erro",
+                GoalKind.Minimize,
+                Microsoft.SolverFoundation.Services.Model.Sum(erro,
+                    Microsoft.SolverFoundation.Services.Model.Sum(diff3)));
+
             Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
             context.Solve();
             clock.Stop();
