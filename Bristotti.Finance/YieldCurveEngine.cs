@@ -302,6 +302,7 @@ namespace Bristotti.Finance
 
             var initialValue = yields[0].SpotMtm;
 
+            var fwds = new List<Term>();
             var forwards = new Decision[yields.Length];
             for (var i = 1; i < forwards.Length; i++)
             {
@@ -312,13 +313,13 @@ namespace Bristotti.Finance
                     initialValue = yields[i].YieldType == YieldType.DI1 ? yields[i].SpotMtm : initialValue;
                     forwards[i] = new Decision(Domain.RealNonnegative, null);
                     forwards[i].SetInitialValue(initialValue);
+                    fwds.Add(forwards[i]);
                     model.AddDecision(forwards[i]);
                 }
             }
 
             var spotFactor = (Term)1d;
             var erro = (Term) 0d;
-            var diff = new Term[forwards.Length - 1];
 
             for (var i = 1; i < forwards.Length; i++)
             {
@@ -328,23 +329,24 @@ namespace Bristotti.Finance
                 var spot = (Microsoft.SolverFoundation.Services.Model.Power(spotFactor, 252d / yields[i].Term) - 1d) * 100d;
                 if(yields[i].YieldType == YieldType.DI1)
                     erro += Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtm - spot);
-
-                diff[i - 1] = forwards[i] - (i == 1 ? (Term) 0 : forwards[i - 1]);
             }
 
-            var diff2 = new Term[diff.Length - 1];
-            for (var i = 1; i < diff.Length; i++)
-                diff2[i - 1] = diff[i] - diff[i - 1];
+            var diff1 = new Term[fwds.Count - 1];
+            for (var i = 1; i <= diff1.Length; i++)
+                diff1[i - 1] = fwds[i] - fwds[i - 1];
 
-            var diff3 = new Term[diff2.Length - 1];
+            var diff2 = new Term[diff1.Length - 1];
+            for (var i = 1; i <= diff2.Length; i++)
+                diff2[i - 1] = diff1[i] - diff1[i - 1];
+
+            var diff3 = (Term) 0;
             for (var i = 1; i < diff2.Length; i++)
-                diff3[i - 1] = Microsoft.SolverFoundation.Services.Model.Abs(diff2[i] - diff2[i - 1]);
+                diff3 += Microsoft.SolverFoundation.Services.Model.Abs(diff2[i] - diff2[i - 1]);
 
             model.AddGoal(
                 "erro",
                 GoalKind.Minimize,
-                Microsoft.SolverFoundation.Services.Model.Sum(erro,
-                    Microsoft.SolverFoundation.Services.Model.Sum(diff3)));
+                Microsoft.SolverFoundation.Services.Model.Sum(erro, diff3));
 
             Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
             context.Solve();
@@ -354,7 +356,7 @@ namespace Bristotti.Finance
             var spotfactor = 1d;
             for (var i = 1; i < forwards.Length; i++)
             {
-                yields[i].Forward = forwards[i].GetDouble();
+                yields[i].Forward = yields[i].IsSameForward ? yields[i-1].Forward :  forwards[i].GetDouble();
                 spotfactor *= Math.Pow(1d + yields[i].Forward / 100, (yields[i].Term - yields[i - 1].Term) / 252);
 
                 yields[i].SpotFactor = spotfactor;
