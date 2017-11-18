@@ -135,6 +135,7 @@ namespace Bristotti.Finance
             yield return new Yield
             {
                 Term = 0,
+                Maturity = date,
                 Forward = cdi.TaxaCDI,
                 SpotMtm = cdi.TaxaCDI,
                 Spot = cdi.TaxaCDI,
@@ -150,6 +151,7 @@ namespace Bristotti.Finance
                     yield return new Yield
                     {
                         Term = GetNetworkDays(date, copomMeetings[i_c].Date, holidays),
+                        Maturity = copomMeetings[i_c].Date,
                         YieldType = YieldType.COPOM
                     };
                     i_c++;
@@ -159,6 +161,7 @@ namespace Bristotti.Finance
                     yield return new Yield
                     {
                         Term = GetNetworkDays(date, di1s[i_d].MaturityDate, holidays),
+                        Maturity = di1s[i_d].MaturityDate,
                         YieldType = YieldType.DI1,
                         SpotMtm = di1s[i_d].Spot,
                         TotalTradesMtm = di1s[i_d].TotalTrades
@@ -171,6 +174,7 @@ namespace Bristotti.Finance
                 yield return new Yield
                 {
                     Term = GetNetworkDays(date, copomMeetings[i_c].Date, holidays),
+                    Maturity = copomMeetings[i_c].Date,
                     YieldType = YieldType.COPOM
                 };
 
@@ -178,6 +182,7 @@ namespace Bristotti.Finance
                 yield return new Yield
                 {
                     Term = GetNetworkDays(date, di1s[i_d].MaturityDate, holidays),
+                    Maturity = di1s[i_d].MaturityDate,
                     YieldType = YieldType.DI1,
                     SpotMtm = di1s[i_d].Spot,
                     TotalTradesMtm = di1s[i_d].TotalTrades

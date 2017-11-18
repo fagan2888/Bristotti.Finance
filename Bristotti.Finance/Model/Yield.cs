@@ -1,8 +1,11 @@
-﻿namespace Bristotti.Finance.Model
+﻿using System;
+
+namespace Bristotti.Finance.Model
 {
     public class Yield
     {
         public int Id { get; set; }
+        public DateTime Maturity { get; set; }
         public double Term { get; set; }
         public double DeltaTerm { get; set; }
         public double Forward { get; set; }

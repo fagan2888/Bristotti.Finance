@@ -28,11 +28,13 @@ namespace InterestRateModellingTool.Main
                 MarkerType = MarkerType.Circle
             };
 
-
             PlotModel.Series.Add(series);
-            //PlotModel.Axes.Add(new LinearColorAxis { Position = AxisPosition.Right, Palette = OxyPalettes.Jet(200) });
 
-            //PlotModel.Series.Add(new FunctionSeries(Math.Cos, 0, 10, 0.1, "cos(x)"));
+            PlotModel.Axes.Add(new DateTimeAxis
+            {
+                Position = AxisPosition.Bottom,
+                StringFormat = "yyyy-MM-dd"
+            });
         }
 
         public DateTime Date
@@ -92,9 +94,4 @@ namespace InterestRateModellingTool.Main
             set { _plotModel = value; OnPropertyChanged();}
         }
     }
-
-    //public class Points
-    //{
-    //    prop
-    //}
 }

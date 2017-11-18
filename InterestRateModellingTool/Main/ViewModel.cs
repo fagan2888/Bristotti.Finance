@@ -8,6 +8,7 @@ using Bristotti.Finance.Model;
 using Bristotti.Finance.Repositories;
 using InterestRateModellingTool.Infraestructure;
 using OxyPlot;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 
 namespace InterestRateModellingTool.Main
@@ -39,7 +40,6 @@ namespace InterestRateModellingTool.Main
         {
             var engine = new YieldCurveEngine();
 
-
             var holidays = _yieldRepository.GetHolidays();
             var cdi = _yieldRepository.GetCDI(_model.Date);
             _model.Yields = engine.BuildYield(
@@ -51,19 +51,10 @@ namespace InterestRateModellingTool.Main
                 .ToArray();
 
 
-            var scatter = (LineSeries) _model.PlotModel.Series[0];
-            scatter.Points.Clear();
-            scatter.Points.AddRange(_model.Yields.Select(yield => new DataPoint(yield.Term, yield.Spot)));
+            var line = (LineSeries) _model.PlotModel.Series[0];
+            line.Points.Clear();
+            line.Points.AddRange(_model.Yields.Select(yield => new DataPoint(DateTimeAxis.ToDouble(yield.Maturity), yield.Spot)));
             _model.PlotModel.InvalidatePlot(true);
-
-            //var plot = new PlotModel { Title = "Yield Curve" };
-            //var scatter = new ScatterSeries
-            //{
-            //    MarkerType = MarkerType.Cross
-            //};
-            //var points = _model.Yields.Select(yield => new ScatterPoint(yield.Term, yield.Spot)).ToArray();
-            //scatter.Points.AddRange(points);
-            //_model.PlotModel = plot;
         }
 
         private void Refresh()

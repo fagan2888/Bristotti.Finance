@@ -54,8 +54,16 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+                            <DataGridTextColumn Header="Maturity" Binding="{Binding Maturity, StringFormat=\{0:dd-MMM-yy\}}"></DataGridTextColumn>
                             <DataGridTextColumn Header="Type" Binding="{Binding YieldType}"></DataGridTextColumn>
                             <DataGridTextColumn Header="Spot MTM" Binding="{Binding SpotMtm, StringFormat=\{0:N4\}}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Right"></Setter>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="# Trades" Binding="{Binding TotalTradesMtm, StringFormat=\{0:N0\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
