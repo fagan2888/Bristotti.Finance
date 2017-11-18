@@ -318,7 +318,6 @@ namespace Bristotti.Finance
 
             var spotFactor = (Term)1d;
             var erro = (Term) 0d;
-            var diff = new Term[forwards.Length - 1];
 
             for (var i = 1; i < forwards.Length; i++)
             {
@@ -328,18 +327,7 @@ namespace Bristotti.Finance
                 var spot = (Microsoft.SolverFoundation.Services.Model.Power(spotFactor, 252d / yields[i].Term) - 1d) * 100d;
                 if(yields[i].YieldType == YieldType.DI1)
                     erro += Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtm - spot);
-
-                //if (i == 1)
-                //    diff[i - 1] = forwards[i] - (i == 1 ? (Term) 0 : forwards[i - 1]);
             }
-
-            //var diff2 = new Term[diff.Length - 1];
-            //for (var i = 1; i < diff.Length; i++)
-            //    diff2[i - 1] = diff[i] - diff[i - 1];
-
-            //var diff3 = new Term[diff2.Length - 1];
-            //for (var i = 1; i < diff2.Length; i++)
-            //    diff3[i - 1] =  diff2[i] - diff2[i - 1];
 
             model.AddGoal("erro", GoalKind.Minimize, erro);
             Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
