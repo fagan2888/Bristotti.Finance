@@ -23,12 +23,17 @@ namespace InterestRateModellingTool.Main
         public Model()
         {
             PlotModel = new PlotModel { Title = "Yield Curve" };
-            var series = new LineSeries
+            var yieldSeries = new LineSeries
             {
                 MarkerType = MarkerType.Circle
             };
+            PlotModel.Series.Add(yieldSeries);
 
-            PlotModel.Series.Add(series);
+            var di1Series = new LineSeries
+            {
+                MarkerType = MarkerType.Diamond
+            };
+            PlotModel.Series.Add(di1Series);
 
             PlotModel.Axes.Add(new DateTimeAxis
             {

@@ -91,6 +91,16 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+                            <DataGridTextColumn Header="Erro" Binding="{Binding Erro, StringFormat=\{0:N4\}}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Right"></Setter>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <!--<DataGridTextColumn Header="Erro" Binding="{Binding IsSameForward}">
+                                
+                            </DataGridTextColumn>-->
                         </DataGrid.Columns>
                     </DataGrid>
                     <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch"></GridSplitter>
