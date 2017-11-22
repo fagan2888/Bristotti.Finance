@@ -23,21 +23,25 @@
         </Menu>-->
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
-                <Label>Date:</Label>
+                <Label>Data:</Label>
                 <DatePicker SelectedDate="{Binding Path=Date, Mode=TwoWay}" />
-                <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
-                <Button Content="Build Curve" Command="{Binding BuildCurveCommand}"/>
-                <Button Content="Test" Command="{Binding TestCommand}"/>
+                <Button Content="Carrega dados" Command="{Binding RefreshCommand}"/>
+                <Button Content="Interpola Curva" Command="{Binding BuildCurveCommand}"/>
             </ToolBar>
         </ToolBarTray>
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock Text="Tempo em Milisegundos:"/>
+            <TextBlock Text="{Binding Path=MillisecondsLastRun, Mode=OneWay, TargetNullValue=-1}" />
+
+        </StatusBar>
         <TabControl>
-            <TabItem Header="COPOM Meetings">
+            <TabItem Header="Reuniões do COPOM">
                 <controls:CopomMeetingControl DataContext="{Binding Path=CopomMeetings, Mode=OneWay}"></controls:CopomMeetingControl>
             </TabItem>
             <TabItem Header="DI1">
                 <controls:DI1Control DataContext="{Binding Path=DI1Series, Mode=OneWay}"></controls:DI1Control>
             </TabItem>
-            <TabItem Header="Curve">
+            <TabItem Header="Curva">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="400"></ColumnDefinition>
@@ -47,44 +51,44 @@
 
                     <DataGrid ItemsSource="{Binding Yields}" AutoGenerateColumns="False" SelectionUnit="FullRow" IsReadOnly="True" CanUserResizeColumns="True" CanUserResizeRows="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Term" Binding="{Binding Term, StringFormat=\{0:N0\}}">
+                            <DataGridTextColumn Header="Prazo" Binding="{Binding Term, StringFormat=\{0:N0\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Maturity" Binding="{Binding Maturity, StringFormat=\{0:dd-MMM-yy\}}"></DataGridTextColumn>
-                            <DataGridTextColumn Header="Type" Binding="{Binding YieldType}"></DataGridTextColumn>
-                            <DataGridTextColumn Header="Spot MTM" Binding="{Binding SpotMtm, StringFormat=\{0:N4\}}">
+                            <DataGridTextColumn Header="Vencimento" Binding="{Binding Maturity, StringFormat=\{0:dd-MMM-yy\}}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding YieldType}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="Taxa Zero Cupom Mercado" Binding="{Binding SpotMtm, StringFormat=\{0:N4\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="# Trades" Binding="{Binding TotalTradesMtm, StringFormat=\{0:N0\}}">
+                            <DataGridTextColumn Header="# Negócios" Binding="{Binding TotalTradesMtm, StringFormat=\{0:N0\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Spot" Binding="{Binding Spot, StringFormat=\{0:N4\}}">
+                            <DataGridTextColumn Header="Taxa Zero Cupom" Binding="{Binding Spot, StringFormat=\{0:N4\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Forward" Binding="{Binding Forward, StringFormat=\{0:N4\}}">
+                            <DataGridTextColumn Header="Taxa a Termo" Binding="{Binding Forward, StringFormat=\{0:N4\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Bump" Binding="{Binding Bump, StringFormat=\{0:N4\}}">
+                            <DataGridTextColumn Header="Incremento" Binding="{Binding Bump, StringFormat=\{0:N4\}}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"></Setter>
@@ -98,9 +102,6 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <!--<DataGridTextColumn Header="Erro" Binding="{Binding IsSameForward}">
-                                
-                            </DataGridTextColumn>-->
                         </DataGrid.Columns>
                     </DataGrid>
                     <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch"></GridSplitter>
@@ -108,5 +109,6 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        
     </DockPanel>
 </Window>

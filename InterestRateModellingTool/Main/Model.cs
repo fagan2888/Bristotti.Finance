@@ -19,19 +19,25 @@ namespace InterestRateModellingTool.Main
         private ObservableCollection<DI1> _di1series;
         private Yield[] _yields;
         private PlotModel _plotModel;
+        private long? _millisecondsLastRun;
 
         public Model()
         {
-            PlotModel = new PlotModel { Title = "Yield Curve" };
+            PlotModel = new PlotModel { Title = "Curva Zero Cupom" };
+            PlotModel.LegendTitle = "Curvas";
+            PlotModel.LegendPosition = LegendPosition.BottomRight;
+
             var yieldSeries = new LineSeries
             {
+                Title = "Taxa Interpolada",
                 MarkerType = MarkerType.Circle
             };
             PlotModel.Series.Add(yieldSeries);
 
             var di1Series = new LineSeries
             {
-                MarkerType = MarkerType.Diamond
+                Title = "Taxa Mercado",
+                MarkerType = MarkerType.Diamond, 
             };
             PlotModel.Series.Add(di1Series);
 
@@ -97,6 +103,14 @@ namespace InterestRateModellingTool.Main
         {
             get => _plotModel;
             set { _plotModel = value; OnPropertyChanged();}
+        }
+
+        public long? MillisecondsLastRun
+        {
+            get => _millisecondsLastRun;
+            set { _millisecondsLastRun = value;
+                OnPropertyChanged();
+            }
         }
     }
 }

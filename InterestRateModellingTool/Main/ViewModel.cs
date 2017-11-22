@@ -45,14 +45,8 @@ namespace InterestRateModellingTool.Main
 
                 var holidays = _yieldRepository.GetHolidays();
                 var cdi = _yieldRepository.GetCDI(_model.Date);
-                //_model.Yields = engine.BuildYield(
-                //        _model.Date,
-                //        _model.CopomMeetings.ToArray(),
-                //        _model.DI1Series.ToArray(),
-                //        cdi,
-                //        holidays)
-                //    .ToArray();
 
+                var clock = System.Diagnostics.Stopwatch.StartNew();
                 _model.Yields = engine.BuildYield2(
                         _model.Date,
                         _model.CopomMeetings.ToArray(),
@@ -60,6 +54,7 @@ namespace InterestRateModellingTool.Main
                         cdi,
                         holidays)
                     .ToArray();
+                _model.MillisecondsLastRun = clock.ElapsedMilliseconds;
 
 
                 var line = (LineSeries)_model.PlotModel.Series[0];
