@@ -157,7 +157,7 @@ namespace Bristotti.Finance
 
             for (var i = 1; i < yields.Length; i++)
             {
-                var nextDI = diPos < diArray.Length ? diArray[diPos] : -1;
+                
 
                 if (yields[i].YieldType == YieldType.COPOM)
                 {
@@ -167,11 +167,12 @@ namespace Bristotti.Finance
                 }
                 else
                 {
-                    if(nextDI == i + 1 && meetings > 0)
+                    diPos++;
+                    var nextDI = diPos < diArray.Length ? diArray[diPos] : -1;
+                    if (nextDI == i + 1 && meetings > 0)
                         yields[i].IsSameForward = true;
                     else
                         yields[i].IsSameForward = false;
-                    diPos++;
                 }
             }
 
@@ -218,7 +219,9 @@ namespace Bristotti.Finance
                         Maturity = di1s[i_d].MaturityDate,
                         YieldType = YieldType.DI1,
                         SpotMtm = di1s[i_d].Spot,
-                        TotalTradesMtm = di1s[i_d].TotalTrades
+                        TotalTradesMtm = di1s[i_d].TotalTrades,
+                        SpotMtmFactor = Math.Pow(1d + di1s[i_d].Spot / 100d,
+                            GetNetworkDays(date, di1s[i_d].MaturityDate, holidays) / 252d)
                     };
                     i_d++;
                 }
@@ -239,7 +242,9 @@ namespace Bristotti.Finance
                     Maturity = di1s[i_d].MaturityDate,
                     YieldType = YieldType.DI1,
                     SpotMtm = di1s[i_d].Spot,
-                    TotalTradesMtm = di1s[i_d].TotalTrades
+                    TotalTradesMtm = di1s[i_d].TotalTrades,
+                    SpotMtmFactor = Math.Pow(1d + di1s[i_d].Spot / 100d,
+                        GetNetworkDays(date, di1s[i_d].MaturityDate, holidays) / 252d)
                 };
         }
 
@@ -302,47 +307,100 @@ namespace Bristotti.Finance
 
             var initialValue = yields[0].SpotMtm;
 
-            var forwards = new Decision[yields.Length];
+            var fwds = new List<Term>();
+            var forwards = new Term[yields.Length];
             for (var i = 1; i < forwards.Length; i++)
             {
                 if (yields[i].IsSameForward)
                     forwards[i] = forwards[i - 1];
                 else
                 {
-                    initialValue = yields[i].YieldType == YieldType.DI1 ? yields[i].SpotMtm : initialValue;
-                    forwards[i] = new Decision(Domain.RealNonnegative, null);
-                    forwards[i].SetInitialValue(initialValue);
-                    model.AddDecision(forwards[i]);
+                    if (i == 1 && yields[i].YieldType == YieldType.DI1)
+                    {
+                        initialValue = yields[i].YieldType == YieldType.DI1 ? yields[i].SpotMtm : initialValue;
+                        forwards[i] = yields[i].SpotMtm;
+                    }
+                    else
+                    {
+                        initialValue = yields[i].YieldType == YieldType.DI1 ? yields[i].SpotMtm : initialValue;
+                        var decision = new Decision(Domain.RealNonnegative, null);
+                        decision.SetInitialValue(initialValue);
+                        forwards[i] = decision;
+                        fwds.Add(decision);
+                        model.AddDecision(decision);
+                    }
                 }
             }
 
             var spotFactor = (Term)1d;
             var erro = (Term) 0d;
+            var forward = forwards.First(t => !Equals(t, null));
+            int j = 1;
+            while (Equals(forwards[j], null))
+                forwards[j++] = forward;
+           
 
             for (var i = 1; i < forwards.Length; i++)
             {
                 var termDelta = yields[i].Term - yields[i - 1].Term;
                 var forwardFactor = Microsoft.SolverFoundation.Services.Model.Power(1d + forwards[i] / 100d, termDelta / 252d);
                 spotFactor *= forwardFactor;
-                var spot = (Microsoft.SolverFoundation.Services.Model.Power(spotFactor, 252d / yields[i].Term) - 1d) * 100d;
-                if(yields[i].YieldType == YieldType.DI1)
-                    erro += Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtm - spot);
+                if (yields[i].YieldType != YieldType.DI1)
+                    continue;
+
+                erro+= Microsoft.SolverFoundation.Services.Model.Abs(yields[i].SpotMtmFactor - spotFactor) * 1000;
             }
 
-            model.AddGoal("erro", GoalKind.Minimize, erro);
+            var erroGoal = model.AddGoal(
+                "erro",
+                GoalKind.Minimize,
+                erro);
+
             Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
             context.Solve();
+            Console.WriteLine($"Solver-solve={clock.ElapsedMilliseconds}");
+
+            foreach (var fwd in fwds.Cast<Decision>())
+                fwd.SetInitialValue(fwd.GetDouble());
+
+            var diff1 = new Term[fwds.Count - 1];
+            for (var i = 1; i <= diff1.Length; i++)
+                diff1[i - 1] = fwds[i] - fwds[i - 1];
+
+            var diff2 = new Term[diff1.Length - 1];
+            for (var i = 1; i <= diff2.Length; i++)
+                diff2[i - 1] = diff1[i] - diff1[i - 1];
+
+            for (var i = 1; i < diff2.Length; i++)
+                erro += Microsoft.SolverFoundation.Services.Model.Abs(diff2[i] - diff2[i - 1]);
+
+            model.RemoveGoals(erroGoal);
+
+            model.AddGoal(
+                "erro",
+                GoalKind.Minimize,
+                erro);
+
+            Console.WriteLine($"Solver-create goal={clock.ElapsedMilliseconds}");
+            var solution = context.Solve();
             clock.Stop();
             Console.WriteLine($"Solver-solve={clock.ElapsedMilliseconds}");
 
             var spotfactor = 1d;
             for (var i = 1; i < forwards.Length; i++)
             {
-                yields[i].Forward = forwards[i].GetDouble();
+                if (yields[i].IsSameForward)
+                    yields[i].Forward = yields[i - 1].Forward;
+                else if (i == 1 && yields[i].YieldType == YieldType.DI1)
+                    yields[i].Forward = yields[i].SpotMtm;
+                else
+                    yields[i].Forward = ((Decision) forwards[i]).GetDouble();
+
                 spotfactor *= Math.Pow(1d + yields[i].Forward / 100, (yields[i].Term - yields[i - 1].Term) / 252);
 
                 yields[i].SpotFactor = spotfactor;
                 yields[i].Spot = (Math.Pow(spotfactor, 252d / yields[i].Term) - 1d) * 100d;
+                yields[i].Bump = yields[i].Forward - yields[i - 1].Forward;
             }
         }
 

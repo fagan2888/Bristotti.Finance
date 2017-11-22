@@ -65,6 +65,13 @@ namespace InterestRateModellingTool.Main
                 var line = (LineSeries)_model.PlotModel.Series[0];
                 line.Points.Clear();
                 line.Points.AddRange(_model.Yields.Select(yield => new DataPoint(DateTimeAxis.ToDouble(yield.Maturity), yield.Spot)));
+
+                line = (LineSeries)_model.PlotModel.Series[1];
+                line.Points.Clear();
+                line.Points.AddRange(
+                    _model.Yields.Where(y => y.YieldType == YieldType.DI1)
+                    .Select(yield => new DataPoint(DateTimeAxis.ToDouble(yield.Maturity), yield.SpotMtm)));
+
                 _model.PlotModel.InvalidatePlot(true);
             }
             catch (Exception ex)
